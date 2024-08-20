@@ -247,7 +247,7 @@ def export_image_encoder(
     mlmodel = ct.convert(
         traced_model,
         inputs=[
-            ct.TensorType(name="image", shape=(1, 3, 1024, 1024)),
+            ct.ImageType(name="image", shape=(1, 3, 1024, 1024), scale=1/255.0, bias=[0, 0, 0])
         ],
         outputs=[
             ct.TensorType(name="image_embedding"),
