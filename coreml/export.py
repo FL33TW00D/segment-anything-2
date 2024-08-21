@@ -244,10 +244,16 @@ def export_image_encoder(
 
     output_path = os.path.join(output_dir, f"sam2_{variant.value}_image_encoder")
 
+    scale = 1/(0.226*255.0)
+    bias = [- 0.485/(0.229) , - 0.456/(0.224), - 0.406/(0.225)]
+
     mlmodel = ct.convert(
         traced_model,
         inputs=[
-            ct.ImageType(name="image", shape=(1, 3, 1024, 1024), scale=1/255.0, bias=[0, 0, 0])
+            ct.ImageType(name="image", 
+                         shape=(1, 3, 1024, 1024), 
+                         scale=scale, 
+                         bias=bias)
         ],
         outputs=[
             ct.TensorType(name="image_embedding"),
