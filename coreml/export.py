@@ -355,7 +355,7 @@ def export_mask_decoder(
             ct.TensorType(name="feats_s1", shape=[1, 64, 128, 128]),
         ],
         outputs=[
-            ct.ImageType(name="low_res_masks", shape=(1, 3, 256, 256)),
+            ct.TensorType(name="low_res_masks"),
         ],
         minimum_deployment_target=min_target,
         compute_units=compute_units,
