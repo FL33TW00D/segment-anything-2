@@ -12,7 +12,7 @@ from PIL.Image import Resampling
 import coremltools as ct
 from coremltools.converters.mil._deployment_compatibility import AvailableTarget
 from coremltools import ComputeUnit
-from coremltools.converters.mil.mil.passes.defs.quantization import ComputePrecision
+from coremltools import precision as ComputePrecision
 from coremltools.converters.mil import register_torch_op
 from coremltools.converters.mil.mil import Builder as mb
 
