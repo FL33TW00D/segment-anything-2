@@ -69,7 +69,7 @@ def parse_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         type=lambda x: getattr(ComputePrecision, x),
         choices=[p for p in ComputePrecision],
         default=ComputePrecision.FLOAT16,
-        help="Precision to use for quantization.",
+        help="Precision to use.",
     )
     return parser
 
