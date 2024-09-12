@@ -12,7 +12,7 @@ from PIL.Image import Resampling
 import coremltools as ct
 from coremltools.converters.mil._deployment_compatibility import AvailableTarget
 from coremltools import ComputeUnit
-from coremltools.converters.mil.mil.passes.defs.quantization import ComputePrecision
+from coremltools import precision as ComputePrecision
 from coremltools.converters.mil import register_torch_op
 from coremltools.converters.mil.mil import Builder as mb
 
@@ -51,11 +51,6 @@ def parse_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="List of 2D points, e.g., '[[10,20], [30,40]]'",
     )
     parser.add_argument(
-        "--boxes",
-        type=str,
-        help="List of 2D bounding boxes, e.g., '[[10,20,30,40], [50,60,70,80]]'",
-    )
-    parser.add_argument(
         "--labels",
         type=str,
         help="List of binary labels for each points entry, denoting foreground (1) or background (0).",
@@ -79,7 +74,7 @@ def parse_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         type=lambda x: getattr(ComputePrecision, x),
         choices=[p for p in ComputePrecision],
         default=ComputePrecision.FLOAT16,
-        help="Precision to use for quantization.",
+        help="Precision to use.",
     )
     return parser
 
@@ -415,14 +410,11 @@ def export_mask_decoder(
 
 
 Point = Tuple[float, float]
-Box = Tuple[float, float, float, float]
-
 
 def export(
     output_dir: str,
     variant: SAM2Variant,
     points: Optional[List[Point]],
-    boxes: Optional[List[Box]],
     labels: Optional[List[int]],
     min_target: AvailableTarget,
     compute_units: ComputeUnit,
@@ -443,21 +435,17 @@ def export(
         orig_hw = export_image_encoder(
             img_predictor, variant, output_dir, min_target, compute_units, precision
         )
-        if boxes is not None and points is None:
-            #if boxes is present and points is not, unique case
-            raise ValueError("Boxes are not supported yet")
-        else:
-            export_points_prompt_encoder(
-                img_predictor,
-                variant,
-                points,
-                labels,
-                orig_hw,
-                output_dir,
-                min_target,
-                compute_units,
-                precision,
-            )
+        export_points_prompt_encoder(
+            img_predictor,
+            variant,
+            points,
+            labels,
+            orig_hw,
+            output_dir,
+            min_target,
+            compute_units,
+            precision,
+        )
         export_mask_decoder(
             img_predictor, variant, output_dir, min_target, compute_units, precision
         )
@@ -468,16 +456,11 @@ if __name__ == "__main__":
     parser = parse_args(parser)
     args = parser.parse_args()
 
-    points, boxes, labels = None, None, None
+    points, labels = None, None
     if args.points:
         points = [tuple(p) for p in ast.literal_eval(args.points)]
-    if args.boxes:
-        boxes = [tuple(b) for b in ast.literal_eval(args.boxes)]
     if args.labels:
         labels = ast.literal_eval(args.labels)
-
-    if boxes and points:
-        raise ValueError("Cannot provide both points and boxes")
 
     if points:
         if not isinstance(points, list) or not all(
@@ -498,17 +481,10 @@ if __name__ == "__main__":
         if len(points) > 16:
             raise ValueError("Number of points must be less than or equal to 16")
 
-    if boxes:
-        if not isinstance(boxes, list) or not all(
-            isinstance(b, tuple) and len(b) == 4 for b in boxes
-        ):
-            raise ValueError("Boxes must be a tuple of 4D bounding boxes")
-
     export(
         args.output_dir,
         args.variant,
         points,
-        boxes,
         labels,
         args.min_deployment_target,
         args.compute_units,
